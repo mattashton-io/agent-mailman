@@ -1,2 +1,28 @@
-*.json
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
 env*
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Google Client Secrets
+credentials.json
+token.json
+client_secret_*.json
+*.json
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Logs
+*.log
