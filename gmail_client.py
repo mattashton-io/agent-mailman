@@ -22,6 +22,7 @@ def get_gmail_service():
     """
     creds = None
     # The file token.json stores the user's access and refresh tokens.
+    print(os.getcwd())
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
     

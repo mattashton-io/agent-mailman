@@ -67,10 +67,14 @@ This guide will help you set up the Google Cloud Project, enable necessary APIs,
    ```bash
    cd ryan-sessions/agent-mailman
    ```
-2. Set the `GOOGLE_CLOUD_PROJECT` environment variable to your Project ID:
-   - **Linux/Mac**: `export GOOGLE_CLOUD_PROJECT="your-project-id"`
-   - **Windows (cmd)**: `set GOOGLE_CLOUD_PROJECT=your-project-id`
-   - **Windows (PowerShell)**: `$env:GOOGLE_CLOUD_PROJECT="your-project-id"`
+2. Create a `.env` file from the example:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open `.env` and set your Project ID:
+   ```text
+   GOOGLE_CLOUD_PROJECT=your-project-id
+   ```
 
 ## Step 7: Install Dependencies
 

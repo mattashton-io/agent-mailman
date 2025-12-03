@@ -1,8 +1,12 @@
 import gmail_client
 import response_generator
 import time
+from dotenv import load_dotenv
 
 def main():
+    # Load environment variables from .env file
+    load_dotenv()
+
     print("Starting Agent Mailman...")
     
     # Authenticate and get Gmail service

@@ -49,7 +49,7 @@ def generate_response(email_content):
     try:
         # Using gemini-1.5-pro as requested (closest available version to 'gemini3-pro' if that was intended, 
         # or simply the latest pro model)
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        model = genai.GenerativeModel('gemini-3-pro-preview')
         response = model.generate_content(prompt)
         
         return response.text.strip()
