@@ -33,7 +33,14 @@ def main():
 
         print(f"Processing email from: {content['sender']} | Subject: {content['subject']}")
 
-        # Generate response
+        # 1. Triage: Check if response is needed
+        if not response_generator.should_respond(content):
+            print(f"Skipping '{content['subject']}': No response needed.")
+            continue
+
+        print(f"Generating response for '{content['subject']}'...")
+
+        # 2. Generate response
         draft_body_text = response_generator.generate_response(content)
         
         # Prepare draft object
