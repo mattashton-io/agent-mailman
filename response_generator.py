@@ -1,6 +1,8 @@
 import google.generativeai as genai
 import secret_manager_utils
 import os
+#from google import genai
+#from google.genai import types
 
 # Configure the Gemini API
 secret_id = os.getenv("SECRET_GEMINI")
