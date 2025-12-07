@@ -1,6 +1,11 @@
 import google.generativeai as genai
 import secret_manager_utils
 import os
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure the Gemini API
 secret_id = os.getenv("SECRET_GEMINI")

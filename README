@@ -1,9 +1,9 @@
 Steps to deploy to GCP Cloud Run:
 docker build -t
-gcloud artifacts repositories create YOUR_REPO_NAME --repository-format=docker --location=YOUR_REGION --description="Docker repository for hello world
+gcloud artifacts repositories create agent-mailman --repository-format=docker --location=us-east4 --description="Docker repository for hello world
 gcloud auth configure-docker us-east4-docker.pkg.dev
-docker tag
-docker push
+docker tag agent-mailman us-east4-docker.pkg.dev/pytutoring-dev/agent-mailman/agent-mailman
+docker push us-east4-docker.pkg.dev/pytutoring-dev/agent-mailman/agent-mailman
 gcloud run deploy hello-world-service --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_REPO_NAME/hello-world:latest --platform managed --region YOUR_REGION
 
 
