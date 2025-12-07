@@ -5,3 +5,4 @@ beautifulsoup4
 google-generativeai
 google-cloud-secret-manager
 python-dotenv
+flask

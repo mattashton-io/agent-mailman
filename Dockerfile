@@ -12,9 +12,16 @@ FROM python:3.13-slim
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Copy the rest of your app and define the run command
+# Copy the rest of your app
 COPY main.py .
 COPY secret_manager_utils.py .
 COPY response_generator.py .
 COPY gmail_client.py .
-CMD ["python3", "main.py"]
+COPY app.py .
+COPY templates/ ./templates/
+
+# Expose the Flask port
+EXPOSE 5000
+
+# Define the run command
+CMD ["python3", "app.py"]
