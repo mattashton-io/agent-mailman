@@ -1,18 +1,24 @@
-from flask import Flask, render_template, request
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 import datetime
 import main
+import uvicorn
+import os
 
-app = Flask(__name__)
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html', year=datetime.datetime.now().year)
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "year": datetime.datetime.now().year})
 
-@app.route('/run', methods=['POST'])
-def run_agent():
+@app.post("/run", response_class=HTMLResponse)
+async def run_agent(request: Request):
     # Call the logic in main.py
     logs = main.run_agent()
-    return render_template('index.html', logs=logs, year=datetime.datetime.now().year)
+    return templates.TemplateResponse("index.html", {"request": request, "logs": logs, "year": datetime.datetime.now().year})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.getenv("PORT", 5000))
+    uvicorn.run(app, host='0.0.0.0', port=port)

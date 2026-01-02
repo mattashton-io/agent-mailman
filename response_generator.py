@@ -19,6 +19,16 @@ if api_key:
 else:
     print(f"Warning: {secret_id} not found in Secret Manager.")
 
+# Default persona - can be customized with demo data/transcripts
+PERSONA = """
+You are a highly efficient personal assistant. Your communication style is:
+- Professional yet approachable.
+- Concise and direct.
+- Helpful but never overly formal.
+- Mirroring the user's focus on clear action items and quick follow-ups.
+- You avoid fluff and get straight to the point.
+"""
+
 def should_respond(email_content):
     """
     Analyzes email to determine if a response is needed using a lightweight model.
@@ -32,12 +42,18 @@ def should_respond(email_content):
         return False
 
     prompt = f"""
-    Analyze the following email and determine if it requires a response.
+    {PERSONA}
+    
+    Analyze the following email and determine if it requires a response or action.
     
     CRITICAL INSTRUCTIONS:
     - Reply with "NO" if the sender contains "no-reply", "do-not-reply", "donotreply", "newsletter", "alert", or similar.
     - Reply with "NO" for any automated system notifications, receipts, or marketing emails.
-    - Reply with "YES" ONLY if it is a personal or professional email that specifically asks for a reply, action, or answer.
+    - Reply with "YES" if it is a personal or professional email that:
+        - Asks for a reply, action, or answer.
+        - Is a meeting request.
+        - Contains an attachment that might need saving.
+        - Mentions a task that needs to be tracked.
 
     Reply with ONLY "YES" or "NO".
 
@@ -49,7 +65,7 @@ def should_respond(email_content):
 
     try:
         # Using lightweight model for triage
-        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+        model = genai.GenerativeModel('gemini-1.5-flash-lite')
         response = model.generate_content(prompt)
         result = response.text.strip().upper()
         print(f"Triage result for '{subject}': {result}")
@@ -62,18 +78,24 @@ def should_respond(email_content):
 
 def generate_response(email_content):
     """
-    Generates a draft response for a given email using Gemini Pro.
+    Generates a draft response and identifies necessary actions (Calendar, Drive, Tasks).
     """
     subject = email_content.get("subject", "No Subject")
     sender = email_content.get("sender", "Unknown Sender")
     body = email_content.get("body", "")
 
     if not api_key:
-        return f"Error: GEMINI_API_KEY is missing. Please ensure it is set in Google Secret Manager.\n\nOriginal Message:\n{body}"
+        return f"Error: GEMINI_API_KEY is missing.\n\nOriginal Message:\n{body}"
 
     prompt = f"""
-    You are a helpful email assistant. Please draft a professional and polite response to the following email.
+    {PERSONA}
     
+    Review the following email and draft a response. 
+    Also, identify if any of the following actions are needed:
+    1. SCHEDULE: Is this a meeting request? (Provide title, start, end in ISO format)
+    2. SAVE: Should any mentioned attachments be saved? (Provide filename)
+    3. TASK: Does this mention a task for the user? (Provide task title)
+
     Sender: {sender}
     Subject: {subject}
     
@@ -81,11 +103,15 @@ def generate_response(email_content):
     {body}
     
     Draft Response:
+    [Your drafted response here]
+
+    Actions Needed:
+    [List any actions in the format ACTION: DETAILS or NONE]
     """
 
     try:
         # Using capable model for drafting
-        model = genai.GenerativeModel('gemini-3-pro-preview')
+        model = genai.GenerativeModel('gemini-1.5-pro')
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:

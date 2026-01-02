@@ -16,7 +16,8 @@ RUN pip install -r requirements.txt
 COPY main.py .
 COPY secret_manager_utils.py .
 COPY response_generator.py .
-COPY gmail_client.py .
+COPY google_client.py .
+COPY mcp_server.py .
 COPY app.py .
 COPY templates/ ./templates/
 
