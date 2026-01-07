@@ -1,45 +1,52 @@
-import google.generativeai as genai
+from google import genai
 import secret_manager_utils
 import os
 from dotenv import load_dotenv
 
-
-# Load environment variables from .env file
+# Load environment variables (Spec compliance: DO use python-dotenv for variable references)
 load_dotenv()
 
-# Configure the Gemini API
-secret_id = os.getenv("SECRET_GEMINI")
-if not secret_id:
-    # Fallback/Default if not set in .env
-    secret_id = "GEMINI_API_KEY"
+# --- Prompt Variables (Spec compliance: Top of file) ---
+MAX_LENGTH_DIRECTIVE = "MAXIMUM TWO TO THREE SENTENCES"
+HTML_OUTPUT_DIRECTIVE = "Format output with HTML tags (e.g., <br> for new lines) for better rendering in web UIs."
 
+def load_persona():
+    """Reads the persona from persona.md."""
+    try:
+        with open("persona.md", "r") as f:
+            return f.read()
+    except Exception as e:
+        print(f"Error loading persona.md: {e}")
+        return "You are a helpful personal assistant."
+
+PERSONA = load_persona()
+
+# --- Model Selection (Spec compliance: Latest STABLE models) ---
+# Jan 2026 search confirms Gemini 3 is production-ready, but IDs use -preview suffix.
+TRIAGE_MODEL = "gemini-3-flash-preview"
+DRAFT_MODEL = "gemini-3-pro-preview"
+
+# Initialize Client
+secret_id = os.environ.get("SECRET_GEMINI", "GEMINI_API_KEY")
 api_key = secret_manager_utils.get_secret(secret_id)
+
+client = None
 if api_key:
-    genai.configure(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 else:
     print(f"Warning: {secret_id} not found in Secret Manager.")
-
-# Default persona - can be customized with demo data/transcripts
-PERSONA = """
-You are a highly efficient personal assistant. Your communication style is:
-- Professional yet approachable.
-- Concise and direct.
-- Helpful but never overly formal.
-- Mirroring the user's focus on clear action items and quick follow-ups.
-- You avoid fluff and get straight to the point.
-"""
 
 def should_respond(email_content):
     """
     Analyzes email to determine if a response is needed using a lightweight model.
     """
+    if not client:
+        print("GenAI Client missing, skipping triage.")
+        return False
+
     subject = email_content.get("subject", "No Subject")
     sender = email_content.get("sender", "Unknown Sender")
     body = email_content.get("body", "")
-
-    if not api_key:
-        print("API Key missing, skipping triage.")
-        return False
 
     prompt = f"""
     {PERSONA}
@@ -64,9 +71,10 @@ def should_respond(email_content):
     """ # Truncating body for lite model efficiency
 
     try:
-        # Using lightweight model for triage
-        model = genai.GenerativeModel('gemini-1.5-flash-lite')
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=TRIAGE_MODEL,
+            contents=prompt
+        )
         result = response.text.strip().upper()
         print(f"Triage result for '{subject}': {result}")
         return "YES" in result
@@ -80,17 +88,21 @@ def generate_response(email_content):
     """
     Generates a draft response and identifies necessary actions (Calendar, Drive, Tasks).
     """
+    if not client:
+        return f"Error: GEMINI_API_KEY is missing.\n\nOriginal Message:\n{email_content.get('body', '')}"
+
     subject = email_content.get("subject", "No Subject")
     sender = email_content.get("sender", "Unknown Sender")
     body = email_content.get("body", "")
 
-    if not api_key:
-        return f"Error: GEMINI_API_KEY is missing.\n\nOriginal Message:\n{body}"
-
     prompt = f"""
     {PERSONA}
     
-    Review the following email and draft a response. 
+    Review the following email and draft a response for Matt Ashton.
+    
+    {MAX_LENGTH_DIRECTIVE}
+    {HTML_OUTPUT_DIRECTIVE}
+
     Also, identify if any of the following actions are needed:
     1. SCHEDULE: Is this a meeting request? (Provide title, start, end in ISO format)
     2. SAVE: Should any mentioned attachments be saved? (Provide filename)
@@ -103,16 +115,16 @@ def generate_response(email_content):
     {body}
     
     Draft Response:
-    [Your drafted response here]
-
+    
     Actions Needed:
     [List any actions in the format ACTION: DETAILS or NONE]
     """
 
     try:
-        # Using capable model for drafting
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=DRAFT_MODEL,
+            contents=prompt
+        )
         return response.text.strip()
     except Exception as e:
         print(f"Error generating response with Gemini: {e}")

@@ -2,23 +2,19 @@
 
 ## **1\. Core Libraries & Dependencies**
 
-* **Generative AI SDK:**  
-  * **REQUIREMENT:** Use google.genai instead of the deprecated google-generativeai package.  
-  * \+4  
+* **Generative AI SDK:**
+  * **REQUIREMENT:** Use `google.genai` instead of the deprecated `google-generativeai` package.  
   * **Reasoning:** The older library is deprecated, and newer models (like Gemini 3\) are optimized for the new SDK.  
-* **Environment Variables:**  
-  * **REQUIREMENT:** Do **NOT** use python-dotenv or local .env files for production secrets.  
-  * \+4  
-  * **Alternative:** Use os.environ.get() for retrieving variables, but ultimately rely on Google Secret Manager for sensitive data.  
-  * \+2
+    **Environment Variables:**  
+  * **REQUIREMENT:** **DO** load environment variables from `.env` files (e.g., using `python-dotenv`).  
+  * **Constraint:** These files **DO NOT** store actual API keys or secrets. They only store **variable references** (e.g., `SECRET_RESOURCE_ID=projects/123/secrets/my-key/versions/1`).  
+  * **Implementation:** The application must read the reference from the environment variable and then use the **Google Secret Manager** client to fetch the actual secret payload.
 
 ## **2\. AI Model Selection & Prompting**
 
 * **Model Versions:**  
-  * **REQUIREMENT:** Always use Google Search to find the latest available Gemini models (e.g., gemini-3-pro-preview, gemini-2.5-flash). **DO NOT** use deprecated models like gemini-1.5-pro or gemini-pro.  
-  * \+2  
-  * **Check:** Verify the exact model string (e.g., ensuring gemini-2.5-flash uses the correct syntax like lite if applicable).  
-  * \+1  
+  * **REQUIREMENT:** ALWAYS USE Google Search to find the latest available stable Gemini models (e.g., gemini-3-pro-preview, gemini-3-flash-preview). **DO NOT** use deprecated models like gemini-1.5-pro or gemini-2.0-pro.  
+  
 * **Prompt Engineering:**  
   * **Formatting:** Move common prompt variables outside of function definitions (e.g., to the top of the file) to reduce redundancy.  
   * **Directives:** Use "MAXIMUM TWO TO THREE SENTENCES" (in all caps) to force concise model outputs for demos.  

@@ -2,9 +2,10 @@ google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 beautifulsoup4
-google-generativeai
+google-genai
 google-cloud-secret-manager
 python-dotenv
 fastapi
 uvicorn
 fastmcp
+google-cloud-aiplatform

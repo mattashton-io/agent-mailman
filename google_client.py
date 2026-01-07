@@ -8,6 +8,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import secret_manager_utils
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Scopes for Gmail, Calendar, Drive, and Tasks
 SCOPES = [
@@ -22,15 +26,20 @@ SCOPES = [
 def get_credentials():
     """Retrieves or refreshes Google OAuth2 credentials."""
     creds = None
-    secret_token_id = os.getenv("SECRET_TOKEN")
+    secret_token_id = os.environ.get("SECRET_TOKEN")
     
+    # Try to load from Secret Manager first
     if secret_token_id:
-        secret_token = secret_manager_utils.get_secret(secret_token_id)
-        if secret_token:
-            with open("token.json", "w") as fid:
-                fid.write(secret_token)
+        secret_token_json = secret_manager_utils.get_secret(secret_token_id)
+        if secret_token_json:
+            token_data = json.loads(secret_token_json)
+            # Use the token directly without writing to disk if possible
+            # However, google-auth-oauthlib often expects a file for authorize_user
+            # We can use Credentials.from_authorized_user_info
+            creds = Credentials.from_authorized_user_info(token_data, SCOPES)
 
-    if os.path.exists("token.json"):
+    # Fallback to local file ONLY for development (as per spec, production must use SM)
+    if not creds and os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
     
     if not creds or not creds.valid:
@@ -38,7 +47,7 @@ def get_credentials():
             creds.refresh(Request())
         else:
             print("Fetching Google credentials from Secret Manager...")
-            secret_id = os.getenv("SECRET_ID")
+            secret_id = os.environ.get("SECRET_ID")
             credentials_json_str = secret_manager_utils.get_secret(secret_id)
             
             if not credentials_json_str:
@@ -49,8 +58,10 @@ def get_credentials():
             flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
             creds = flow.run_local_server(port=0)
         
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+        # In a real production environment, we should write back to Secret Manager
+        # For this demo, we'll avoid writing to disk unless absolutely necessary.
+        # with open("token.json", "w") as token:
+        #     token.write(creds.to_json())
             
     return creds
 
